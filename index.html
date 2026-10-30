@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Torre de Resfriamento</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='9' width='20' height='19' rx='2' fill='%2316202b'/%3E%3Ccircle cx='12' cy='8' r='4' fill='%230e7c9b'/%3E%3Ccircle cx='21' cy='8' r='4' fill='%230e7c9b'/%3E%3C/svg%3E">
+<script>
+  // aplica o tema salvo antes de desenhar a página (evita piscar)
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("torre3d.tema"); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/" } }
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-thermo" viewBox="0 0 24 24"><path d="M14 14.76V4a2 2 0 1 0-4 0v10.76a4 4 0 1 0 4 0Z"/><path d="M12 9v7"/></symbol>
+    <symbol id="i-fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-7 4-7 2.5 0 3 3 1 5l-3 3"/><path d="M14 12c4 0 7 1 7 4 0 2.5-3 3-5 1l-3-3"/><path d="M12 14c0 4-1 7-4 7-2.5 0-3-3-1-5l3-3"/><path d="M10 12c-4 0-7-1-7-4 0-2.5 3-3 5-1l3 3"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3V10.5Z"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 3-2.5 4-4.5 4H16a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16.5" cy="10.5" r="1"/></symbol>
+    <symbol id="i-max" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="brand">
+    <div class="logo-chip">
+      <img src="img/senai.png" alt="SENAI" class="logo senai">
+      <span class="logo-sep" aria-hidden="true"></span>
+      <img src="img/arauco.png" alt="Arauco, Projeto Sucuriú" class="logo arauco">
+    </div>
+    <div class="ttl">
+      <h1>Torre de Resfriamento</h1>
+      <p>Supervisório da bancada Arauco com Arduino Uno</p>
+    </div>
+  </div>
+  <div class="appbar-right">
+    <div id="linkPill" class="pill off" role="status"><i></i><span>Desconectado</span></div>
+    <button id="btnBell" class="icon-btn bell" title="Alarmes ativos" aria-label="Alarmes ativos">
+      <svg><use href="#i-bell"/></svg><b id="bellCount" hidden>0</b>
+    </button>
+    <button id="btnTheme" class="icon-btn" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+      <svg class="sun"><use href="#i-sun"/></svg><svg class="moon"><use href="#i-moon"/></svg>
+    </button>
+    <time class="clock" id="clock">--:--:--</time>
+  </div>
+</header>
+
+<section class="kpis" aria-label="Leituras principais">
+  <div class="kpi kpi-temp">
+    <div class="kpi-head"><svg><use href="#i-thermo"/></svg>Temperatura</div>
+    <div class="kpi-val"><b id="kTemp">--,-</b><small>°C</small></div>
+    <div class="tbar" aria-hidden="true">
+      <div class="tbar-fill" id="kTempBar"></div>
+      <span class="tk" style="left:18%"></span><span class="tk on" style="left:20%"></span><span class="tk max" style="left:35%"></span><span class="tk crit" style="left:60%"></span>
+    </div>
+    <div class="tbar-scale"><span>0</span><span style="left:20%">20</span><span style="left:35%">35</span><span style="left:60%">60</span><span class="end">100 °C</span></div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-head"><svg><use href="#i-gauge"/></svg>Ventoinha</div>
+    <div class="kpi-val"><b id="kPct">--</b><small>%</small></div>
+    <div class="bar"><div id="kPctBar"></div></div>
+    <div class="kpi-sub">PWM <span id="kPwm">-</span> de 255</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-head"><svg><use href="#i-fan"/></svg>Rotação estimada</div>
+    <div class="kpi-val"><b id="kRpm">--</b><small>RPM</small></div>
+    <div class="bar"><div id="kRpmBar"></div></div>
+    <div class="kpi-sub">Sem sensor: proporcional ao PWM</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-head"><svg><use href="#i-pulse"/></svg>Estado da torre</div>
+    <div class="kpi-val state"><span class="sdot" id="kDot"></span><b id="kState">Sem dados</b></div>
+    <div class="kpi-sub" id="kStateSub">Aguardando o Arduino</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-head"><svg><use href="#i-sliders"/></svg>Modo</div>
+    <div class="kpi-val"><b id="kMode">—</b></div>
+    <div class="kpi-sub" id="kModeSub">Quem define a temperatura</div>
+  </div>
+</section>
+
+<main class="grid">
+  <div class="col-main">
+  <!-- 3D -->
+  <section class="panel stage-panel">
+    <header class="panel-head">
+      <h2><svg><use href="#i-cube"/></svg>Modelo 3D</h2>
+      <div class="tools" role="toolbar" aria-label="Vista 3D">
+        <button class="icon-btn" id="btnRotate" title="Girar automaticamente" aria-pressed="false"><svg><use href="#i-rotate"/></svg></button>
+        <button class="icon-btn" id="btnXray" title="Raio-X: ver o interior" aria-pressed="false"><svg><use href="#i-layers"/></svg></button>
+        <button class="icon-btn" id="btnView" title="Vista inicial"><svg><use href="#i-home"/></svg></button>
+        <button class="icon-btn" id="btnColors" title="Cores da torre" aria-pressed="false"><svg><use href="#i-palette"/></svg></button>
+        <button class="icon-btn" id="btnFull" title="Tela cheia"><svg><use href="#i-max"/></svg></button>
+      </div>
+    </header>
+    <div class="stage">
+      <div id="scene3d" class="scene"></div>
+      <div id="noLink" class="nolink">Sem dados do Arduino. Conecte a porta em Operação.</div>
+      <div class="legend" aria-hidden="true">
+        <span>Frio</span><i></i><span>Quente</span>
+      </div>
+      <div id="colorPanel" class="color-panel" hidden>
+        <div class="cp-head"><b>Cores da torre</b><button id="cpClose" class="icon-btn sm" aria-label="Fechar"><svg><use href="#i-x"/></svg></button></div>
+        <div id="cpList" class="cp-list"></div>
+        <button id="cpReset" class="btn ghost sm">Restaurar padrão</button>
+      </div>
+    </div>
+  </section>
+  <div class="sub-row">
+  <!-- Tendência -->
+  <section class="panel trend">
+    <header class="panel-head">
+      <h2><svg><use href="#i-chart"/></svg>Tendência</h2>
+      <div class="legend-inline"><span class="lg t">Temperatura (°C)</span><span class="lg p">Ventoinha (%)</span></div>
+      <div class="tools">
+        <select id="trendWin" aria-label="Janela de tempo" class="sm">
+          <option value="60">1 min</option>
+          <option value="300" selected>5 min</option>
+          <option value="900">15 min</option>
+        </select>
+        <button id="btnCsv" class="btn ghost sm"><svg><use href="#i-download"/></svg>Exportar CSV</button>
+      </div>
+    </header>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </section>
+  <!-- Arduino -->
+  <section class="panel hw">
+    <header class="panel-head"><h2><svg><use href="#i-chip"/></svg>Arduino</h2><span class="meta" id="hwMeta">—</span></header>
+    <div class="hw-body">
+      <div class="leds">
+        <div class="led red" id="ledR"><i></i>Desligado</div>
+        <div class="led amber" id="ledA"><i></i>Normal</div>
+        <div class="led green" id="ledG"><i></i>Máxima</div>
+      </div>
+      <div class="lcd" title="Espelho do LCD 16x2"><pre id="lcd">
+                </pre></div>
+    </div>
+  </section>
+  </div>
+  </div>
+  <div class="col-side">
+  <!-- Operação -->
+  <aside class="panel ops">
+    <header class="panel-head"><h2><svg><use href="#i-plug"/></svg>Operação</h2></header>
+    <div class="ops-body">
+      <label class="field-label" for="portSelect">Porta do Arduino</label>
+      <div class="row">
+        <select id="portSelect"></select>
+        <button id="btnScan" class="icon-btn boxed" title="Procurar portas"><svg><use href="#i-refresh"/></svg></button>
+      </div>
+      <div class="row" id="manualPortRow" hidden>
+        <input id="manualPort" type="text" placeholder="Digite a porta, ex.: COM5" aria-label="Porta digitada" class="txt">
+      </div>
+      <button id="btnConnect" class="btn primary block">Conectar</button>
+      <p class="hint" id="linkInfo">Escolha a porta e clique em Conectar.</p>
+
+      <div class="divider"></div>
+
+      <span class="field-label">Modo de operação</span>
+      <div class="seg" id="modeSeg" role="radiogroup" aria-label="Modo de operação">
+        <button data-mode="LOCAL" role="radio">Local</button>
+        <button data-mode="REMOTO" role="radio">Remoto</button>
+        <button data-mode="MANUAL" role="radio">Manual</button>
+      </div>
+
+      <div class="pane" data-pane="LOCAL">
+        <p class="pane-text">A temperatura vem do potenciômetro da bancada. O Arduino aplica a histerese sozinho.</p>
+        <div class="readout"><span>Potenciômetro</span><b><span id="potVal">--,-</span> °C</b></div>
+      </div>
+
+      <div class="pane" data-pane="REMOTO" hidden>
+        <div class="ctl-head"><span>Temperatura comandada</span><b><span id="spTempVal">25,0</span> °C</b></div>
+        <div class="slider-row">
+          <button class="icon-btn boxed" data-step="-1" data-target="temp" aria-label="Diminuir 1 °C">−</button>
+          <input type="range" id="spTemp" min="0" max="100" step="0.5" value="25" class="temp-range" aria-label="Temperatura comandada">
+          <button class="icon-btn boxed" data-step="1" data-target="temp" aria-label="Aumentar 1 °C">+</button>
+        </div>
+        <div class="chips">
+          <button class="chip" data-temp="15">15 °C</button>
+          <button class="chip" data-temp="25">25 °C</button>
+          <button class="chip" data-temp="35">35 °C</button>
+          <button class="chip" data-temp="60">60 °C</button>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="MANUAL" hidden>
+        <div class="ctl-head"><span>Ventoinha</span><b><span id="spFanVal">0</span> %</b></div>
+        <div class="slider-row">
+          <button class="icon-btn boxed" data-step="-5" data-target="fan" aria-label="Diminuir 5%">−</button>
+          <input type="range" id="spFan" min="0" max="100" step="1" value="0" aria-label="Velocidade da ventoinha">
+          <button class="icon-btn boxed" data-step="5" data-target="fan" aria-label="Aumentar 5%">+</button>
+        </div>
+        <div class="chips">
+          <button class="chip" data-fan="0">Desligar</button>
+          <button class="chip" data-fan="50">50 %</button>
+          <button class="chip" data-fan="70">70 %</button>
+          <button class="chip" data-fan="100">100 %</button>
+        </div>
+      </div>
+
+      <div class="pane sim" id="ctlSim" hidden>
+        <div class="ctl-head"><span>Potenciômetro do simulador</span><b><span id="simPotVal">22,0</span> °C</b></div>
+        <input type="range" id="simPot" min="0" max="100" step="0.5" value="22" aria-label="Potenciômetro do simulador">
+        <label class="check"><input type="checkbox" id="simAuto" checked> Variar sozinho</label>
+      </div>
+
+      <p class="hint safety">Se o supervisório fechar ou o cabo soltar, o Arduino volta para o potenciômetro em 5 s.</p>
+    </div>
+  </aside>
+  </div>
+
+
+
+
+  <!-- Eventos -->
+  <section class="panel events">
+    <header class="panel-head">
+      <h2><svg><use href="#i-list"/></svg>Eventos e alarmes</h2>
+      <div class="tools"><button id="btnClearLog" class="btn ghost sm">Limpar</button></div>
+    </header>
+    <ol id="log" class="log"></ol>
+  </section>
+</main>
+
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
